@@ -1,0 +1,2 @@
+SpringPyhsicalNamingStrategy - 우리가 원하는 형태의 table 명으로 변경해줄 수 있음
+카멜 케이스 -> 언더 스코어 (orderDate -> order_date)
