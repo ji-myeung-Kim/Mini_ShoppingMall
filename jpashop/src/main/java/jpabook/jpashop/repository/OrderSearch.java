@@ -7,5 +7,5 @@ import lombok.Setter;
 @Getter @Setter
 public class OrderSearch {
     private String memberName; //[회원이름]
-    private OrderStatus orderstatus; // 주문상태, [order, Cancel]
+    private OrderStatus orderStatus; // 주문상태, [order, Cancel]
 }
