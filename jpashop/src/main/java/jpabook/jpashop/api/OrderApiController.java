@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
@@ -80,16 +81,77 @@ public class OrderApiController {
      *
      * 단점 - *******페이지 불가능******
      * warn 내면서 메모리에서 해주긴하지만 모든 데이터들을 상대로 실험해야됨!!!!메모리 아웃됨;;;
-     * 
+     *
      */
     @GetMapping("/api/v3/orders")
     public List<OrderDto> orders3() {
         List<Order> orders = orderRepository.findAllWithItem();
 
-        for (Order order : orders) {
-            System.out.println("order ref =" + order + " Id = " + order.getId());
+        List<OrderDto> result = orders.stream()
+                .map(o -> new OrderDto(o))
+                .collect(Collectors.toList());
+        return result;
+    }
 
-        }
+    /**
+     *    select
+     *         orderitems0_.order_id as order_id5_5_1_,
+     *         orderitems0_.order_item_id as order_it1_5_1_,
+     *         orderitems0_.order_item_id as order_it1_5_0_,
+     *         orderitems0_.count as count2_5_0_,
+     *         orderitems0_.item_id as item_id4_5_0_,
+     *         orderitems0_.order_id as order_id5_5_0_,
+     *         orderitems0_.order_price as order_pr3_5_0_
+     *     from
+     *         order_item orderitems0_
+     *     where
+     *         orderitems0_.order_id in (
+     *             ?, ?
+     *         )
+     *         in 사용함으로써 한번에 다 땡겨옴
+     *==============================================================
+     *   select
+     *         item0_.item_id as item_id2_3_0_,
+     *         item0_.name as name3_3_0_,
+     *         item0_.price as price4_3_0_,
+     *         item0_.stock_quantity as stock_qu5_3_0_,
+     *         item0_.artist as artist6_3_0_,
+     *         item0_.etc as etc7_3_0_,
+     *         item0_.author as author8_3_0_,
+     *         item0_.isbn as isbn9_3_0_,
+     *         item0_.actor as actor10_3_0_,
+     *         item0_.director as directo11_3_0_,
+     *         item0_.dtype as dtype1_3_0_
+     *     from
+     *         item item0_
+     *     where
+     *         item0_.item_id in (
+     *             ?, ?, ?, ?
+     *         )
+     *
+     *  여기도 in 사용함으로써 2, 3, 9, 10 한번에 땡겨올 수 있다.
+     *  1:N:M -> 1:1:1
+     *
+     *  default_batch_fetch_size: 100사용!!!!!
+     *
+     *  장점:조인보다 Db 데이터 전송량이 최적화됨
+     *  (Order와 OrderItem 을 조인하면 order가 OrderItem만큼 중복해서 죄회
+     *  이 방법은 각각 조회하므로 전송해야할 중복 데이터가 없다.
+     *
+     *  페치 조인 방식과 비교해서 쿼리 호출수가 약간 증가하지만, DB 데이터 전송량이 감소
+     *  컬렉션 페치 조인은 페이징 불가능 하지만 이 방법은 페이징이 가능
+     *
+     *  결론 ----
+     *  ToOne 관계는 페치 조인해서 페이징에 영향을 주지 않음. 따라서 ToOne 관계는 페치조인으로
+     *  쿼리 수를 줄이고 해결하고, 나머지는 hibernate.default_batch_fetch_size로 최적화화
+    */
+    @GetMapping("/api/v3.1/orders")
+    public List<OrderDto> ordersV3_page(
+            @RequestParam(value = "offset", defaultValue = "0") int offset,
+            @RequestParam(value = "limit", defaultValue = "100") int limit)
+    {
+        List<Order> orders = orderRepository.findAllWithMemberDelivery(offset, limit);
+
         List<OrderDto> result = orders.stream()
                 .map(o -> new OrderDto(o))
                 .collect(Collectors.toList());
