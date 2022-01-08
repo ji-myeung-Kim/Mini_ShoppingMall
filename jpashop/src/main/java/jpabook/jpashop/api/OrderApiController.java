@@ -169,6 +169,10 @@ public class OrderApiController {
         return orderQueryRepository.findOrderQueryDtos();
     }
 
+    @GetMapping("/api/v5/orders")
+    public List<OrderQueryDto> ordersV5() {
+        return orderQueryRepository.findAllByDtoOptimization();
+    }
     /**
      * no properties라고 뜰경우 있는데 Data가 존재하지 않는 경우
      */
